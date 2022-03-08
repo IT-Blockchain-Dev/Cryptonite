@@ -5,8 +5,8 @@ import AWN from "awesome-notifications"
 import MetamaskAPI from "../../shared/MetamaskAPI";
 import { ethers } from 'ethers'
 import Web3 from 'web3'
-import BasicModal from "../Home/Modal";
-
+import BasicModal from '../Home/Modal';
+import { useWeb3React } from "@web3-react/core";
 
 const Header = () => {
   let logo = "https://crpyotonite-game-site.s3.eu-west-2.amazonaws.com/images/logo-small.svg";
@@ -21,6 +21,9 @@ const Header = () => {
   const [defaultAccount, setDefaultAccount] = useState('')
   const [userNetwork, setUserNetwork] = useState(null)
   const [userToken, setUserToken] = useState('')
+
+  const { library, chainId, account, activate, deactivate, active } =
+        useWeb3React();
   useEffect(() => {
 
     setTimeout(() => {
@@ -106,22 +109,22 @@ const userLoginHandler = (publicAddress) => {
 
   const connectWalletHandler = () => {
 
-      if (window.ethereum) {
-          // user has metamask installed
-          connectToMetamaskWallet(window.ethereum)
-          .then(result => {
-              if (window.ethereum.chainId === '0x38') {
-                  userLoginHandler(result)
-              }
-              else {
+      // if (window.ethereum) {
+      //     // user has metamask installed
+      //     connectToMetamaskWallet(window.ethereum)
+      //     .then(result => {
+      //         if (window.ethereum.chainId === '0x38') {
+      //             userLoginHandler(result)
+      //         }
+      //         else {
                   
-                  new AWN().alert('Please select the Smart Chain network (BSC) and try again.', {labels: {alert: 'Wrong network'}})
-              }
+      //             new AWN().alert('Please select the Smart Chain network (BSC) and try again.', {labels: {alert: 'Wrong network'}})
+      //         }
               
-          })
-      } else {
-        new AWN().Info('Please install Metamask and try again.', {labels: {alert: 'Install Metamask'}})
-      }
+      //     })
+      // } else {
+      //   new AWN().Info('Please install Metamask and try again.', {labels: {alert: 'Install Metamask'}})
+      // }
     }
 
 
@@ -180,11 +183,8 @@ const userLoginHandler = (publicAddress) => {
   },[])
 
   const handleSubmenu = () => {
+    alert(account);
     document.querySelector('#connect-submenu').classList.toggle('active')
-  }
-
-  const handleSelectWallet = () =>{
-    
   }
 
   return (
@@ -279,11 +279,14 @@ const userLoginHandler = (publicAddress) => {
           </li>
         </ul>
       </div>
-      <div className={classes.metamaskBtn} id="connect-btn" onClick={handleSelectWallet}>
+      <div className={classes.metamaskBtn} id="connect-btn">
         <img src={metaMaskBtn} alt="Metamask Logo" />
-        {/* <div onClick={defaultAccount === '' ? connectWalletHandler: handleSubmenu}> */}
-        <div>
-          <BasicModal />
+        <div onClick={account == undefined ? ()=>{}: handleSubmenu}>
+        {/* <div> */}
+      
+          <img src={metaMask} alt="" />
+          {/* <div>{ defaultAccount === '' ? 'Connect metamask' : `Address: ${defaultAccount.substring(0,3)}...${defaultAccount.substring(defaultAccount.length-3,defaultAccount.length)}`}</div> */}
+          <div><BasicModal /></div>
           {userToken === '' ? () => {} : 
             <ul className={classes.links3} id="connect-submenu">
               <li>
@@ -295,6 +298,9 @@ const userLoginHandler = (publicAddress) => {
             </ul>
         }
         </div>
+        
+      
+       
         
       </div>
     </div>

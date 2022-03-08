@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
 import Avatar from "@mui/material/Avatar";
+import { makeStyles, styled } from "@mui/styles";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemAvatar from "@mui/material/ListItemAvatar";
@@ -19,13 +20,44 @@ import coinbase from "./Img/coinbase.png";
 import { useWeb3React } from "@web3-react/core";
 import { connectors } from "../../connectors";
 import { toHex, truncateAddress } from "../../utils";
-
+import { ethers } from "ethers";
 const emails = ["username@gmail.com", "user02@gmail.com"];
 
+const useStyles = makeStyles({
+    list: {
+        display: "flex",
+        flexDirection: "column",
+        borderRadius: "2em",
+        backgroundColor: "black",
+        padding: "16px 30px 16px 30px",
+        boxShadow: "0 3px 5px 2px rgba(255, 105, 135, .3)",
+    },
+    root: {
+        background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
+        border: 0,
+        borderRadius: 30,
+        boxShadow: "0 3px 5px 2px rgba(255, 105, 135, .3)",
+        color: "white",
+        // height: 48,
+        padding: "0 30px",
+    },
+});
+
+// const customizeList = styled(List)(({ theme }) => ({
+//     borderRadius: "2em",
+// }));
 function SimpleDialog(props) {
     const { onClose, selectedValue, open } = props;
-    const { library, chainId, account, activate, deactivate, active } =
-        useWeb3React();
+    const {
+        library,
+        chainId,
+        account,
+        activate,
+        deactivate,
+        active,
+        provider,
+    } = useWeb3React();
+    const classes = useStyles();
 
     const handleClose = () => {
         onClose();
@@ -34,13 +66,37 @@ function SimpleDialog(props) {
     const handleListItemClick = (value) => {
         onClose(value);
     };
-    const handleMetaMask = () => {
-        activate(connectors.injected);
+
+    const switchNetwork = async (provider) => {
+        console.log("switch", provider);
+        try {
+            await provider.request({
+                method: "wallet_switchEthereumChain",
+                params: [{ chainId: toHex(56) }],
+            });
+        } catch (switchError) {
+            if (switchError.code === 4902) {
+                try {
+                    await provider.request({
+                        method: "wallet_addEthereumChain",
+                        params: [networkParams[toHex(56)]],
+                    });
+                } catch (error) {
+                    setError(error);
+                }
+            }
+        }
+    };
+    const handleMetaMask = async () => {
+        // activate(connectors.injected);
+        await ethereum.request({ method: "eth_requestAccounts" });
+        await switchNetwork(window.ethereum);
         setProvider("injected");
         handleClose();
+        console.log(active);
     };
 
-    const handleCoinBase = () => {
+    const handleCoinBase = async () => {
         activate(connectors.coinbaseWallet);
         setProvider("coinbaseWallet");
         handleClose();
@@ -57,8 +113,15 @@ function SimpleDialog(props) {
     };
 
     return (
-        <Dialog onClose={handleClose} open={open}>
-            <List sx={{ pt: 0 }}>
+        <Dialog
+            onClose={handleClose}
+            open={open}
+            sx={{ pt: 0 }}
+            PaperProps={{
+                style: { borderRadius: 30 },
+            }}
+        >
+            <List className={classes.root} sx={{ pt: 0 }}>
                 <ListItem button sx={{ height: 100 }} onClick={handleMetaMask}>
                     <ListItemAvatar sx={{ marginLeft: 4, marginRight: 7 }}>
                         <img src={metamask} width="50px" />
@@ -138,24 +201,17 @@ export default function SimpleDialogDemo() {
 
     return (
         <div>
-            <Typography variant="subtitle1" component="div"></Typography>
-            <br />
-
             {!active ? (
                 <Button
                     variant="text"
                     onClick={handleClickOpen}
                     style={{ color: "white" }}
                 >
-                    <h3>Select Wallet</h3>
+                    Select Wallet
                 </Button>
             ) : (
-                <Button
-                    variant="text"
-                    onClick={handleDisconnect}
-                    style={{ color: "white" }}
-                >
-                    <h3>{`Addr: ${truncateAddress(account)}`}</h3>
+                <Button variant="text" style={{ color: "white" }}>
+                    {`Addr: ${truncateAddress(account)}`}
                 </Button>
             )}
 
